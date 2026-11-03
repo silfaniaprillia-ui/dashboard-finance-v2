@@ -52,12 +52,16 @@ th{color:var(--mute);font-weight:500}#th th{cursor:pointer}
 <div class="card"><div class="hd"><h2>Summary per customer</h2><span class="sub">Klik baris untuk melihat SO beserta Last Updated on terbaru · Alasan bisa diketik langsung dan tersimpan otomatis <b id="rn"></b></span></div>
 <div class="tw"><table><thead><tr id="th"></tr></thead><tbody id="tb"></tbody></table></div></div>
 </div><script>
-const API='PASTE_URL_APPS_SCRIPT_DI_SINI'; // URL Web App (berakhiran /exec)
+const API='https://script.google.com/macros/s/AKfycbyAO95OW2qE99i4rBCCcivcZZRDqrSZdSFF1WS_eULasF6gjOnBoJ9onHAeWNKsgZPmww/exec'; // URL Web App (berakhiran /exec)
 const M=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 const dt=s=>{const [y,m,d]=s.split('-');return +d+' '+M[m-1]+' '+y};
 const fmt=n=>'Rp '+Math.round(n).toLocaleString('id-ID');
 const short=n=>n>=1e9?(n/1e9).toFixed(2).replace('.',',')+' M':n>=1e6?(n/1e6).toFixed(1).replace('.',',')+' jt':Math.round(n).toLocaleString('id-ID');
-let D=[];const mapRows=RAW=>RAW.map(r=>({kat:r[0],area:r[1],cust:r[2],sales:r[3],po:r[4],so:r[5],ref:r[6],cr:r[7],mat:r[8],prod:r[9],dpp:r[10],tot:r[11],lu:r[13],pj:r[14]}));
+const MO={jan:1,feb:2,mar:3,apr:4,mei:5,may:5,jun:6,jul:7,agu:8,agt:8,aug:8,sep:9,okt:10,oct:10,nov:11,des:12,dec:12},p2=n=>('0'+n).slice(-2);
+const nd=s=>{s=String(s).trim();let m=/^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s);if(m)return m[1]+'-'+p2(m[2])+'-'+p2(m[3]);
+m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(s);if(m)return m[3]+'-'+p2(m[2])+'-'+p2(m[1]);
+m=/^(\d{1,2})[-\s]([A-Za-z]{3})[A-Za-z]*[-\s,]*(\d{2,4})/.exec(s);if(m&&MO[m[2].toLowerCase()]){const y=+m[3]<100?2000+ +m[3]:+m[3];return y+'-'+p2(MO[m[2].toLowerCase()])+'-'+p2(m[1])}return s};
+let D=[];const mapRows=RAW=>RAW.map(r=>({kat:r[0],area:r[1],cust:r[2],sales:r[3],po:r[4],so:r[5],ref:r[6],cr:nd(r[7]),mat:r[8],prod:r[9],dpp:r[10],tot:r[11],lu:nd(r[13]),pj:r[14]}));
 const $=id=>document.getElementById(id),sum=(a,f)=>a.reduce((s,x)=>s+f(x),0);
 const F={area:'',kat:'',sales:'',mat:'',prod:'',cust:'',q:''};let view='mat',sk='tot',sd=-1;const open=new Set();
 const KEYS=['area','kat','sales','mat','prod','cust'];
