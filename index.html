@@ -17,7 +17,7 @@ h2{font:600 15px "IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;margin:0}
 .top,.ctl,.hd{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
 .top{margin-bottom:14px}.hd{margin-bottom:12px}.ctl{justify-content:flex-start;margin-bottom:10px}
 .sub{color:var(--mute);font-size:12.5px}
-select,input,button{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 11px}
+select,input,button,textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 11px}
 button{cursor:pointer}button:hover{background:var(--hi)}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
 .seg button{border:0;border-radius:0;border-right:1px solid var(--line)}.seg button:last-child{border:0}
@@ -34,8 +34,11 @@ button{cursor:pointer}button:hover{background:var(--hi)}
 .bar.on{background:var(--hi);outline:1px solid var(--brand)}.bar.dim{opacity:.45}
 .trk{background:var(--soft);border-radius:3px;height:12px;overflow:hidden}.trk i{display:block;height:100%;background:var(--brand)}
 .bar em{font-style:normal;text-align:right;font-variant-numeric:tabular-nums}
-.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:1120px}input.rs{width:100%;min-width:220px;padding:5px 8px;font-size:13px}input.rs:read-only{background:transparent;border-color:transparent}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:1120px}
 th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td.rs{white-space:normal;min-width:240px;width:300px}
+textarea.rs{display:block;width:100%;min-width:220px;padding:5px 8px;font-size:13px;line-height:1.4;resize:none;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere}
+textarea.rs[readonly]{background:transparent;border-color:transparent}
 th{color:var(--mute);font-weight:500}#th th{cursor:pointer}
 .n{text-align:right;font-variant-numeric:tabular-nums}
 .cr{cursor:pointer}.cr td:nth-child(1),.cr td:nth-child(2){overflow:hidden;text-overflow:ellipsis}.cr td:nth-child(1){max-width:190px}.cr td:nth-child(2){max-width:130px}.cr:hover,.cr.o{background:var(--hi)}
@@ -80,6 +83,9 @@ return Object.values(m).map(c=>({...c,nso:Object.keys(c.so).length,nif:c.refs.si
 const RS={};let rdb=null,pend=false;
 const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,150)||'x';
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+// Tinggi kotak alasan menyesuaikan panjang teks (wrap otomatis)
+const fit=t=>{t.style.height='auto';t.style.height=(t.scrollHeight+t.offsetHeight-t.clientHeight)+'px'};
+const fitAll=()=>document.querySelectorAll('textarea.rs').forEach(fit);
 const cols=[['cust','Customer'],['proj','Proyek'],['kat','Kategori'],['area','Area'],['nso','SO','n'],['nif','IF','n'],['lu','Last Updated on'],['tot','Total pending','n']];
 function render(){
 const a=filt(),C=custs(a),L={area:'Area',kat:'Kategori',sales:'Sales',mat:'Material',prod:'Produk',cust:'Customer'};
@@ -91,8 +97,9 @@ $('kpis').innerHTML=[['Total pending (incl. PPN)',fmt(sum(a,x=>x.tot))],['DPP',f
 bars('mat',view,filt([view]));bars('cust','cust',filt(['cust']),10);bars('sales','sales',filt(['sales']));
 $('th').innerHTML=cols.map(c=>`<th class="${c[2]||''}" data-s="${c[0]}">${c[1]}${sk===c[0]?(sd<0?' ▾':' ▴'):''}</th>`).join('')+'<th>Alasan pending billing</th>';
 C.sort((p,q)=>(p[sk]>q[sk]?1:p[sk]<q[sk]?-1:0)*sd);
-$('tb').innerHTML=C.map(c=>{const o=open.has(c.cust);return `<tr class="cr${o?' o':''}" data-c="${encodeURIComponent(c.cust)}"><td title="${c.cust}">${o?'▾':'▸'} ${c.cust}</td><td title="${c.pjl}">${c.proj}</td><td>${c.kat}</td><td>${c.area}</td><td class="n">${c.nso}</td><td class="n">${c.nif}</td><td>${dt(c.lu)}</td><td class="n">${fmt(c.tot)}</td><td class="rs"><input class="rs" data-sl="${slug(c.cust)}" data-cu="${esc(c.cust)}" value="${esc(RS[slug(c.cust)]||'')}" placeholder="${rdb?'Ketik alasan…':'-'}" maxlength="300" ${rdb?'':'readonly'}></td></tr>`+(o?`<tr class="sub"><td colspan="9"><table class="in"><thead><tr><th>Sales Order</th><th>PO</th><th>Proyek</th><th>Material</th><th class="n">IF</th><th>Last Updated on</th><th class="n">Total</th></tr></thead><tbody>${Object.values(c.so).sort((p,q)=>q.tot-p.tot).map(s=>`<tr><td>${s.so}</td><td>${s.po}</td><td>${s.pj}</td><td>${[...s.mats].join(', ')}</td><td class="n">${s.refs.size}</td><td>${dt(s.lu)}</td><td class="n">${fmt(s.tot)}</td></tr>`).join('')}</tbody></table></td></tr>`:'')}).join('')
-+`<tr class="ft"><td colspan="7">Total ${C.length} customer</td><td class="n">${fmt(sum(C,c=>c.tot))}</td><td></td></tr>`}
+$('tb').innerHTML=C.map(c=>{const o=open.has(c.cust);return `<tr class="cr${o?' o':''}" data-c="${encodeURIComponent(c.cust)}"><td title="${c.cust}">${o?'▾':'▸'} ${c.cust}</td><td title="${c.pjl}">${c.proj}</td><td>${c.kat}</td><td>${c.area}</td><td class="n">${c.nso}</td><td class="n">${c.nif}</td><td>${dt(c.lu)}</td><td class="n">${fmt(c.tot)}</td><td class="rs"><textarea class="rs" rows="1" data-sl="${slug(c.cust)}" data-cu="${esc(c.cust)}" placeholder="${rdb?'Ketik alasan…':'-'}" maxlength="300" ${rdb?'':'readonly'}>${esc(RS[slug(c.cust)]||'')}</textarea></td></tr>`+(o?`<tr class="sub"><td colspan="9"><table class="in"><thead><tr><th>Sales Order</th><th>PO</th><th>Proyek</th><th>Material</th><th class="n">IF</th><th>Last Updated on</th><th class="n">Total</th></tr></thead><tbody>${Object.values(c.so).sort((p,q)=>q.tot-p.tot).map(s=>`<tr><td>${s.so}</td><td>${s.po}</td><td>${s.pj}</td><td>${[...s.mats].join(', ')}</td><td class="n">${s.refs.size}</td><td>${dt(s.lu)}</td><td class="n">${fmt(s.tot)}</td></tr>`).join('')}</tbody></table></td></tr>`:'')}).join('')
++`<tr class="ft"><td colspan="7">Total ${C.length} customer</td><td class="n">${fmt(sum(C,c=>c.tot))}</td><td></td></tr>`;
+fitAll()}
 document.addEventListener('click',e=>{if(e.target.closest('td.rs'))return;const b=e.target.closest('[data-k],[data-view],[data-s],[data-c],[data-x],#rs');if(!b)return;const d=b.dataset;
 if(b.id==='rs'){KEYS.forEach(k=>F[k]='');F.q='';$('q').value=''}
 else if(d.view){view=d.view;F.mat=F.prod=''}
@@ -112,8 +119,12 @@ Object.entries(r.reasons||{}).forEach(([n,v])=>RS[slug(n)]=v);rdb=true;
 $('asof').textContent=new Date(r.ts).toLocaleString('id-ID',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'Asia/Jakarta'});
 $('fS').innerHTML='<option value="">Semua salesperson</option>'+[...new Set(D.map(x=>x.sales))].sort().map(s=>`<option>${s}</option>`).join('');
 render()}catch(e){$('asof').textContent='gagal memuat data (periksa URL Apps Script / kode akses)'}}
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('input.rs'))e.target.blur()});
-document.addEventListener('change',async e=>{const i=e.target.closest('input.rs');if(!i||!rdb)return;const k=i.dataset.sl,v=i.value.trim(),old=RS[k]||'';RS[k]=v;$('rn').textContent='· menyimpan…';
+// Enter = simpan (tidak membuat baris baru); teks panjang tetap wrap otomatis
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('textarea.rs')){e.preventDefault();e.target.blur()}});
+document.addEventListener('input',e=>{if(e.target.matches('textarea.rs'))fit(e.target)});
+window.addEventListener('resize',fitAll);
+if(document.fonts)document.fonts.ready.then(fitAll);
+document.addEventListener('change',async e=>{const i=e.target.closest('textarea.rs');if(!i||!rdb)return;const k=i.dataset.sl,v=i.value.replace(/\s*\n\s*/g,' ').trim(),old=RS[k]||'';RS[k]=v;$('rn').textContent='· menyimpan…';
 try{await api({cust:i.dataset.cu,text:v});$('rn').textContent='· tersimpan'}catch(err){RS[k]=old;$('rn').textContent='· gagal menyimpan';render()}});
 render();load();
 </script></body></html>
